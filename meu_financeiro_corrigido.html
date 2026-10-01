@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Meu Financeiro</title>
+<style>
+*{box-sizing:border-box}
+:root{--bg:#f5f7fb;--card:#fff;--text:#182033;--muted:#74809a;--primary:#3157d5;--green:#159a67;--red:#df4c5c;--line:#e7ebf2;--shadow:0 10px 30px rgba(28,42,75,.08)}
+body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}
+button{cursor:pointer;border:0}
+.app{min-height:100vh}
+header{height:72px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:20}
+.logo{font-weight:800;font-size:20px;color:var(--primary)}
+.user{display:flex;align-items:center;gap:10px;color:var(--muted)}
+.avatar{width:38px;height:38px;border-radius:50%;background:#e8edff;color:var(--primary);display:grid;place-items:center;font-weight:800}
+main{max-width:1100px;margin:0 auto;padding:28px 20px 110px}
+.screen{display:none}.screen.active{display:block}
+h1{font-size:28px;margin:0 0 5px}.subtitle{color:var(--muted);margin:0 0 22px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow)}
+.label{font-size:13px;color:var(--muted)}.value{font-size:26px;font-weight:800;margin-top:8px}
+.green{color:var(--green)}.red{color:var(--red)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin:20px 0}
+.btn{padding:12px 16px;border-radius:12px;background:#eef2ff;color:var(--primary);font-weight:700}
+.btn.primary{background:var(--primary);color:white}.btn.danger{background:#fff0f1;color:var(--red)}
+.section{margin-top:24px}.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.list{display:grid;gap:10px}.item{background:#fff;border:1px solid var(--line);border-radius:15px;padding:15px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.item-title{font-weight:750}.meta{font-size:12px;color:var(--muted);margin-top:4px}
+.item-right{text-align:right}.item-actions{display:flex;gap:7px;margin-top:7px;justify-content:flex-end}.small{padding:7px 10px;border-radius:9px;font-size:12px;font-weight:700}
+.empty{padding:30px;text-align:center;color:var(--muted);background:#fff;border:1px dashed #ccd3e1;border-radius:15px}
+form{display:grid;gap:13px;max-width:600px}.field{display:grid;gap:6px}.field label{font-size:13px;font-weight:700}.field input,.field select{padding:12px 13px;border:1px solid #d9deea;border-radius:11px;background:white;outline:none}.field input:focus,.field select:focus{border-color:var(--primary)}
+.bottom{position:fixed;bottom:0;left:0;right:0;height:70px;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:center;gap:8px;z-index:30}.nav{background:transparent;color:var(--muted);padding:8px 20px;font-weight:700}.nav.active{color:var(--primary)}
+.back{margin-bottom:18px}.back button{background:transparent;color:var(--primary);font-weight:700;padding:0}
+.modal{display:none;position:fixed;inset:0;background:rgba(15,22,40,.45);z-index:100;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}.modal-box{background:white;border-radius:20px;padding:22px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.2)}.modal-box h3{margin-top:0}.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}
+.login{position:fixed;inset:0;background:linear-gradient(135deg,#eef2ff,#f7f9ff);display:none;align-items:center;justify-content:center;padding:20px;z-index:200}.login.show{display:flex}.login-box{width:100%;max-width:400px;background:#fff;padding:30px;border-radius:24px;box-shadow:var(--shadow)}.pin{letter-spacing:8px}.face{font-size:44px;text-align:center;margin:8px 0 15px}
+.toast{position:fixed;right:20px;bottom:85px;background:#182033;color:#fff;padding:12px 16px;border-radius:11px;display:none;z-index:150}.toast.show{display:block}
+@media(max-width:750px){.cards{grid-template-columns:1fr}.bottom{justify-content:space-around}.nav{padding:8px 10px}.item{align-items:flex-start}.item-right{min-width:120px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="logo">Meu Financeiro</div>
+  <div class="user"><span id="helloName"></span><span class="avatar" id="avatar">U</span></div>
+</header>
+
+<main>
+<section id="home" class="screen active">
+  <h1 id="welcome">Olá!</h1>
+  <p class="subtitle">Aqui está um resumo das suas finanças.</p>
+  <div class="cards">
+    <div class="card"><div class="label">Saldo</div><div class="value" id="balance">R$ 0,00</div></div>
+    <div class="card"><div class="label">Entradas</div><div class="value green" id="income">R$ 0,00</div></div>
+    <div class="card"><div class="label">Saídas</div><div class="value red" id="expense">R$ 0,00</div></div>
+  </div>
+  <div class="actions">
+    <button class="btn primary" onclick="openForm('income')">+ Nova entrada</button>
+    <button class="btn" onclick="openForm('expense')">− Nova saída</button>
+    <button class="btn" onclick="navigate('installments')">Parcelas</button>
+  </div>
+  <div class="section">
+    <div class="section-head"><h2>Últimos lançamentos</h2><button class="btn small" onclick="navigate('transactions')">Ver todos</button></div>
+    <div id="recent" class="list"></div>
+  </div>
+</section>
+
+<section id="transactions" class="screen">
+  <div class="back"><button onclick="goHome()">← Voltar ao início</button></div>
+  <h1>Lançamentos</h1><p class="subtitle">Entradas e saídas registradas.</p>
+  <div class="actions"><button class="btn primary" onclick="openForm('income')">+ Entrada</button><button class="btn" onclick="openForm('expense')">− Saída</button></div>
+  <div id="transactionsList" class="list"></div>
+</section>
+
+<section id="installments" class="screen">
+  <div class="back"><button onclick="goHome()">← Voltar ao início</button></div>
+  <h1>Parcelas</h1><p class="subtitle">Gerencie suas compras parceladas.</p>
+  <div class="actions"><button class="btn primary" onclick="openInstallmentForm()">+ Nova compra parcelada</button></div>
+  <div id="installmentsList" class="list"></div>
+</section>
+</main>
+
+<nav class="bottom">
+  <button class="nav active" data-screen="home" onclick="goHome()">⌂ Início</button>
+  <button class="nav" data-screen="transactions" onclick="navigate('transactions')">↕ Lançamentos</button>
+  <button class="nav" data-screen="installments" onclick="navigate('installments')">▤ Parcelas</button>
+</nav>
+</div>
+
+<div class="modal" id="modal">
+<div class="modal-box">
+<h3 id="modalTitle">Novo lançamento</h3>
+<form id="entryForm">
+<div class="field"><label>Descrição</label><input id="desc" required></div>
+<div class="field"><label>Valor</label><input id="amount" type="number" step="0.01" min="0.01" required></div>
+<div class="field"><label>Data</label><input id="date" type="date" required></div>
+<div class="field" id="categoryField"><label>Categoria</label><select id="category"><option>Alimentação</option><option>Casa</option><option>Transporte</option><option>Compras</option><option>Saúde</option><option>Lazer</option><option>Outros</option></select></div>
+<div class="modal-actions"><button type="button" class="btn" onclick="closeModal()">Cancelar</button><button class="btn primary">Salvar</button></div>
+</form>
+</div></div>
+
+<div class="modal" id="installmentModal">
+<div class="modal-box">
+<h3>Nova compra parcelada</h3>
+<form id="installmentForm">
+<div class="field"><label>Descrição da compra</label><input id="iDesc" required></div>
+<div class="field"><label>Valor total</label><input id="iTotal" type="number" step="0.01" min="0.01" required></div>
+<div class="field"><label>Número de parcelas</label><input id="iCount" type="number" min="2" max="120" required></div>
+<div class="field"><label>Primeiro vencimento</label><input id="iDate" type="date" required></div>
+<div class="modal-actions"><button type="button" class="btn" onclick="closeInstallmentModal()">Cancelar</button><button class="btn primary">Salvar</button></div>
+</form>
+</div></div>
+
+<div class="modal" id="confirmModal">
+<div class="modal-box">
+<h3>Excluir parcela?</h3>
+<p id="confirmText">Essa ação não poderá ser desfeita.</p>
+<div class="modal-actions"><button class="btn" onclick="closeConfirm()">Cancelar</button><button class="btn danger" id="confirmDelete">Excluir</button></div>
+</div></div>
+
+<div class="login" id="login">
+<div class="login-box">
+<div class="logo">Meu Financeiro</div>
+<h2 id="loginGreeting">Olá!</h2>
+<p class="subtitle">Digite seu PIN para entrar.</p>
+<div class="field"><label>Nome</label><input id="userNameInput" placeholder="Como você quer ser chamada?"></div>
+<div class="field"><label>PIN de 4 números</label><input id="pinInput" class="pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••"></div>
+<button class="btn primary" style="width:100%;margin-top:14px" onclick="saveLogin()">Entrar</button>
+<div style="text-align:center;color:#74809a;margin:15px 0 8px">ou</div>
+<button class="btn" style="width:100%" onclick="fakeFaceId()">◉ Entrar com Face ID</button>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY='meuFinanceiro_v4';
+let data={name:'',pin:'',transactions:[],installments:[]};
+let pendingDelete=null;
+
+function load(){
+  try{const saved=JSON.parse(localStorage.getItem(KEY));if(saved)data={...data,...saved};}catch(e){}
+  if(!data.name||!data.pin){document.getElementById('login').classList.add('show');}
+  updateUI();
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(data));updateUI();}
+function money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));}
+function today(){return new Date().toISOString().slice(0,10);}
+
+function navigate(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const target=document.getElementById(id); if(!target)return;
+  target.classList.add('active');
+  document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('active',n.dataset.screen===id));
+  window.scrollTo({top:0,behavior:'smooth'});
+  updateUI();
+}
+function goHome(){navigate('home');}
+
+function updateUI(){
+  const inc=data.transactions.filter(x=>x.type==='income').reduce((a,x)=>a+Number(x.amount),0);
+  const exp=data.transactions.filter(x=>x.type==='expense').reduce((a,x)=>a+Number(x.amount),0);
+  document.getElementById('income').textContent=money(inc);
+  document.getElementById('expense').textContent=money(exp);
+  document.getElementById('balance').textContent=money(inc-exp);
+  const name=data.name||'';
+  document.getElementById('welcome').textContent='Olá, '+(name||'usuário')+'!';
+  document.getElementById('helloName').textContent=name?name:'';
+  document.getElementById('avatar').textContent=(name?name[0]:'U').toUpperCase();
+  renderRecent();renderTransactions();renderInstallments();
+}
+function renderRecent(){
+  const el=document.getElementById('recent');
+  const arr=[...data.transactions].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  el.innerHTML=arr.length?arr.map(transactionHTML).join(''):'<div class="empty">Nenhum lançamento ainda.</div>';
+}
+function transactionHTML(x){
+  const sign=x.type==='income'?'+':'−';
+  return `<div class="item">
+    <div><div class="item-title">${esc(x.desc)}</div><div class="meta">${x.date.split('-').reverse().join('/')} · ${esc(x.category||'Outros')}</div></div>
+    <div class="item-right"><div class="${x.type==='income'?'green':'red'}"><b>${sign} ${money(x.amount)}</b></div>
+    <div class="item-actions"><button class="small btn danger" onclick="askDeleteTransaction('${x.id}')">Excluir</button></div></div>
+  </div>`;
+}
+function renderTransactions(){
+  const el=document.getElementById('transactionsList');
+  const arr=[...data.transactions].sort((a,b)=>b.date.localeCompare(a.date));
+  el.innerHTML=arr.length?arr.map(transactionHTML).join(''):'<div class="empty">Nenhum lançamento registrado.</div>';
+}
+function renderInstallments(){
+  const el=document.getElementById('installmentsList');
+  if(!data.installments.length){el.innerHTML='<div class="empty">Nenhuma compra parcelada cadastrada.</div>';return;}
+  el.innerHTML=data.installments.map((p,idx)=>{
+    const per=Number(p.total)/Number(p.count);
+    return `<div class="item">
+      <div><div class="item-title">${esc(p.desc)}</div><div class="meta">${money(per)} por parcela · ${p.count} parcelas</div></div>
+      <div class="item-right"><div><b>${money(p.total)}</b></div>
+      <div class="item-actions"><button class="small btn" onclick="viewInstallment('${p.id}')">Ver parcelas</button><button class="small btn danger" onclick="askDeleteInstallment('${p.id}')">Excluir</button></div></div>
+    </div>`;
+  }).join('');
+}
+function viewInstallment(id){
+  const p=data.installments.find(x=>x.id===id);if(!p)return;
+  const per=Number(p.total)/Number(p.count);
+  const rows=Array.from({length:p.count},(_,i)=>{
+    const d=new Date(p.date+'T12:00:00');d.setMonth(d.getMonth()+i);
+    const ds=d.toISOString().slice(0,10);
+    return `<div class="item"><div><div class="item-title">${esc(p.desc)} — parcela ${i+1}/${p.count}</div><div class="meta">Vencimento: ${ds.split('-').reverse().join('/')}</div></div>
+    <div class="item-right"><div class="red"><b>− ${money(per)}</b></div><div class="item-actions"><button class="small btn danger" onclick="askDeleteParcel('${p.id}',${i})">Excluir parcela</button></div></div></div>`;
+  }).join('');
+  const el=document.getElementById('installmentsList');
+  el.innerHTML=`<div class="actions"><button class="btn" onclick="renderInstallments()">← Voltar às compras</button></div><div class="list">${rows}</div>`;
+}
+function openForm(type){
+  document.getElementById('modalTitle').textContent=type==='income'?'Nova entrada':'Nova saída';
+  document.getElementById('entryForm').dataset.type=type;
+  document.getElementById('date').value=today();
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal(){document.getElementById('modal').classList.remove('show');document.getElementById('entryForm').reset();}
+document.getElementById('entryForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const f=e.target;
+  data.transactions.push({id:crypto.randomUUID(),type:f.dataset.type,desc:document.getElementById('desc').value,amount:Number(document.getElementById('amount').value),date:document.getElementById('date').value,category:document.getElementById('category').value});
+  save();closeModal();toast('Lançamento salvo!');
+});
+function openInstallmentForm(){document.getElementById('iDate').value=today();document.getElementById('installmentModal').classList.add('show')}
+function closeInstallmentModal(){document.getElementById('installmentModal').classList.remove('show');document.getElementById('installmentForm').reset()}
+document.getElementById('installmentForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  data.installments.push({id:crypto.randomUUID(),desc:document.getElementById('iDesc').value,total:Number(document.getElementById('iTotal').value),count:Number(document.getElementById('iCount').value),date:document.getElementById('iDate').value});
+  save();closeInstallmentModal();toast('Compra parcelada salva!');
+});
+function askDeleteTransaction(id){pendingDelete={kind:'transaction',id};document.getElementById('confirmText').textContent='O lançamento será excluído permanentemente.';document.getElementById('confirmModal').classList.add('show')}
+function askDeleteInstallment(id){pendingDelete={kind:'installment',id};document.getElementById('confirmText').textContent='A compra e todas as suas parcelas serão excluídas.';document.getElementById('confirmModal').classList.add('show')}
+function askDeleteParcel(id,index){pendingDelete={kind:'parcel',id,index};document.getElementById('confirmText').textContent='Somente esta parcela será excluída.';document.getElementById('confirmModal').classList.add('show')}
+document.getElementById('confirmDelete').onclick=()=>{
+  if(!pendingDelete)return;
+  if(pendingDelete.kind==='transaction')data.transactions=data.transactions.filter(x=>x.id!==pendingDelete.id);
+  if(pendingDelete.kind==='installment')data.installments=data.installments.filter(x=>x.id!==pendingDelete.id);
+  if(pendingDelete.kind==='parcel'){
+    const p=data.installments.find(x=>x.id===pendingDelete.id);
+    if(p){p.count--;if(p.count<=0)data.installments=data.installments.filter(x=>x.id!==pendingDelete.id);}
+  }
+  const wasParcel=pendingDelete.kind==='parcel', id=pendingDelete.id;
+  save();closeConfirm();toast('Excluído com sucesso!');
+  if(wasParcel && data.installments.some(x=>x.id===id))viewInstallment(id);
+};
+function closeConfirm(){document.getElementById('confirmModal').classList.remove('show');pendingDelete=null}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+function saveLogin(){
+  const name=document.getElementById('userNameInput').value.trim();
+  const pin=document.getElementById('pinInput').value.trim();
+  if(!name||!/^\d{4}$/.test(pin)){toast('Digite um nome e um PIN de 4 números.');return}
+  data.name=name;data.pin=pin;save();document.getElementById('login').classList.remove('show');toast('Bem-vinda, '+name+'!');
+}
+function fakeFaceId(){
+  if(!data.name||!data.pin){toast('Cadastre seu nome e PIN primeiro.');return}
+  document.getElementById('login').classList.remove('show');toast('Face ID autorizado!');
+}
+document.getElementById('userNameInput').addEventListener('input',e=>document.getElementById('loginGreeting').textContent=e.target.value?'Olá, '+e.target.value+'!':'Olá!');
+load();
+</script>
+</body>
+</html>
